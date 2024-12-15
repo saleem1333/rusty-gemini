@@ -2,11 +2,16 @@
 name = "rusty-gemini"
 version = "0.1.0"
 edition = "2021"
+authors = ["Mohammed Abd Elsamad"]
+description = "A powerful and user-friendly library designed for effortless integration with the Gemini API"
+repository = "https://github.com/saleem1333/rusty-gemini"
+license-file = "LICENSE"
+keywords = ["gemini", "ai", "bard"]
 
 [dependencies]
 base64 = "0.22.1"
 futures-util = "0.3.31"
-reqwest = {version = "0.12.9", features = ["json", "stream"]}
-serde = {version = "1.0.214", features = ["derive"]}
+reqwest = { version = "0.12.9", features = ["json", "stream"] }
+serde = { version = "1.0.214", features = ["derive"] }
 serde_json = "1.0.133"
-tokio = {version = "1.42.0", features = ["full"]}
+tokio = { version = "1.42.0", features = ["full"] }
