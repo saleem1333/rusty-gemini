@@ -8,6 +8,7 @@ pub mod api;
 pub mod chat;
 pub mod model;
 pub mod content;
+pub mod grounding;
 
 pub static BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -64,10 +65,6 @@ pub struct EmbedContentConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_dimensionality: Option<i32>,
 }
-
-
-
-
 
 
 
