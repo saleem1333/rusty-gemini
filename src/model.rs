@@ -185,6 +185,7 @@ impl GenerativeModel {
 }
 
 #[derive(Debug, Default, Clone)]
+#[allow(non_camel_case_types)]
 pub enum GeminiModel {
     #[default]
     Pro_1_5,

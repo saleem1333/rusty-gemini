@@ -1,5 +1,4 @@
 use core::str;
-use std::{fmt::Display};
 
 use api::{Candidate, ContentEmbedding, GenerationConfig, PromptFeedback, SafetySetting, TaskType, Tool, UsageMetadata};
 use content::Content;
