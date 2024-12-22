@@ -3,6 +3,7 @@ use serde::Deserialize;
 use crate::content::Content;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GroundingAtrribution {
     pub source_id: AtrributionSourceId,
     pub content: Content,
