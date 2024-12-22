@@ -37,18 +37,18 @@ pub enum Part {
     },
 }
 
-pub fn ser_data<S>(bytes: &Vec<u8>, ser: S) -> Result<S::Ok, S::Error>
+fn ser_data<S>(bytes: &Vec<u8>, ser: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
     ser.serialize_str(&general_purpose::STANDARD.encode(bytes))
 }
 
-pub fn des_data<'de, D>(des: D) -> Result<Vec<u8>, D::Error>
+fn des_data<'de, D>(des: D) -> Result<Vec<u8>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    Ok(general_purpose::STANDARD.decode(String::deserialize(des).unwrap()).unwrap())
+    Ok(general_purpose::STANDARD.decode(String::deserialize(des)?).unwrap())
 }
 impl From<&str> for Part {
     fn from(value: &str) -> Self {
