@@ -69,7 +69,7 @@ pub struct SearchEntryPoint {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RetrievalMetadata {
-    pub google_search_dynamic_retrieval_scroe: Option<f64>,
+    pub google_search_dynamic_retrieval_score: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
