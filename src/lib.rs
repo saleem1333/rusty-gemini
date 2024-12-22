@@ -1,14 +1,16 @@
-use core::str;
-
-use api::{Candidate, ContentEmbedding, GenerationConfig, PromptFeedback, SafetySetting, TaskType, Tool, UsageMetadata};
+use api::{
+    Candidate, ContentEmbedding, GenerationConfig, PromptFeedback, SafetySetting, TaskType, Tool,
+    UsageMetadata,
+};
 use content::Content;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
 pub mod chat;
-pub mod model;
 pub mod content;
 pub mod grounding;
+pub mod model;
+pub mod error;
 
 pub static BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -31,7 +33,6 @@ pub struct GeminiResponse {
     pub candidates: Vec<Candidate>,
     pub usage_metadata: UsageMetadata,
     pub prompt_feedback: Option<PromptFeedback>,
-
 }
 
 impl GeminiResponse {
@@ -48,12 +49,10 @@ pub struct EmbedContentRequest {
     pub config: EmbedContentConfig,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct EmbedContentResponse {
     pub embedding: ContentEmbedding,
 }
-
 
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -65,7 +64,6 @@ pub struct EmbedContentConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_dimensionality: Option<i32>,
 }
-
 
 
 #[cfg(test)]

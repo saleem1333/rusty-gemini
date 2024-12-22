@@ -4,9 +4,10 @@ use std::{borrow::Cow, fmt::Display};
 use futures_util::{Stream, StreamExt};
 
 use crate::{
-    api::{GenerationConfig, SafetySetting, Tool},
+    api::{GeminiGenericError, GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
     chat::ChatSession,
     content::Content,
+    error::{GeminiError, GeminiErrorKind},
     EmbedContentConfig, EmbedContentRequest, EmbedContentResponse, GeminiRequest, GeminiResponse,
 };
 pub static BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
@@ -94,7 +95,10 @@ impl GenerativeModel {
             history,
         }
     }
-    pub async fn generate_content(&self, prompt: Vec<Content>) -> GeminiResponse {
+    pub async fn generate_content(
+        &self,
+        prompt: Vec<Content>,
+    ) -> Result<GeminiResponse, GeminiError> {
         let request = GeminiRequest {
             contents: prompt,
             tools: self.tools.clone(),
@@ -112,18 +116,31 @@ impl GenerativeModel {
             .json(&request)
             .send()
             .await
-            .unwrap();
+            .map_err(|err| GeminiError {
+                kind: GeminiErrorKind::Other,
+                message: err.to_string(),
+            })?;
 
-        let text = response.text().await;
+        let text = response.text().await.map_err(|err| GeminiError {
+            kind: GeminiErrorKind::Other,
+            message: err.to_string(),
+        })?;
 
-        let response = serde_json::from_str::<GeminiResponse>(&text.unwrap()).unwrap();
-        response
+        println!("{:?}", text);
+
+        if let Ok(response) = serde_json::from_str::<GeminiResponse>(&text) {
+            Ok(response)
+        } else {
+            Err(serde_json::from_str::<GeminiGenericErrorResponse>(&text)
+                .map(|x| GeminiError::from(x.error))
+                .unwrap_or_else(|x| GeminiError::message(&x.to_string())))
+        }
     }
 
     pub async fn generate_content_streamed(
         &self,
         prompt: Vec<Content>,
-    ) -> impl Stream<Item = GeminiResponse> {
+    ) -> impl Stream<Item = Result<GeminiResponse, GeminiError>> {
         let request = GeminiRequest {
             contents: prompt,
             tools: self.tools.clone(),
@@ -152,8 +169,17 @@ impl GenerativeModel {
             // in the last chunk, str should be empty
             if str.is_empty() {
                 None
+            } else if let Ok(response) = serde_json::from_str::<GeminiResponse>(&str) {
+                Some(Ok(response))
             } else {
-                Some(serde_json::from_str::<GeminiResponse>(str).unwrap())
+                Some(Err(serde_json::from_str::<GeminiGenericErrorResponse>(
+                    &str,
+                )
+                .map(|x| GeminiError::from(x.error))
+                .unwrap_or_else(|err| GeminiError {
+                    kind: GeminiErrorKind::Other,
+                    message: err.to_string(),
+                })))
             }
         });
         stream
@@ -163,7 +189,7 @@ impl GenerativeModel {
         &self,
         content: impl Into<Content>,
         config: EmbedContentConfig,
-    ) -> EmbedContentResponse {
+    ) -> Result<EmbedContentResponse, GeminiError> {
         let content = content.into();
         let request = EmbedContentRequest { content, config };
 
@@ -175,12 +201,19 @@ impl GenerativeModel {
             ))
             .json(&request)
             .send()
-            .await
-            .unwrap();
+            .await.map_err(|err| GeminiError::message(&err.to_string()))?;
 
-        let text = response.text().await;
-        let response = serde_json::from_str::<EmbedContentResponse>(&text.unwrap()).unwrap();
-        response
+        let text = response
+            .text()
+            .await
+            .map_err(|err| GeminiError::message(&err.to_string()))?;
+        if let Ok(response) = serde_json::from_str::<EmbedContentResponse>(&text) {
+            Ok(response)
+        } else {
+            Err(serde_json::from_str::<GeminiGenericErrorResponse>(&text)
+                .map(|x| GeminiError::from(x.error))
+                .unwrap_or_else(|x| GeminiError::message(&x.to_string())))
+        }
     }
 }
 

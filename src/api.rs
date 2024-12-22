@@ -274,3 +274,15 @@ pub enum TaskType {
     #[serde(rename = "FACT_VERIFICATION")]
     FactVerification,
 }
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeminiGenericErrorResponse {
+    pub(crate) error: GeminiGenericError,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeminiGenericError {
+    pub code: i32,
+    pub message: String,
+    pub status: String,
+}
