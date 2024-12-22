@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{content::{Content, Part}, grounding::GroundingAtrribution};
+use crate::{content::{Content, Part}, grounding::GroundingAtrribution, schema::Schema};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -221,6 +221,8 @@ pub struct GenerationConfig {
     pub stop_sequences: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response_mime_type: Option<ResponseMimeType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_schema: Option<Schema>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub candidate_count: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]

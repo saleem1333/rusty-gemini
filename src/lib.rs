@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub mod api;
 pub mod chat;
 pub mod content;
+pub mod schema;
 pub mod grounding;
 pub mod model;
 pub mod error;
