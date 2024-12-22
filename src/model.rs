@@ -4,7 +4,7 @@ use std::{borrow::Cow, fmt::Display};
 use futures_util::{Stream, StreamExt};
 
 use crate::{
-    api::{GeminiGenericError, GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
+    api::{GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
     chat::ChatSession,
     content::Content,
     error::{GeminiError, GeminiErrorKind},
@@ -126,8 +126,6 @@ impl GenerativeModel {
             message: err.to_string(),
         })?;
 
-        println!("{:?}", text);
-
         if let Ok(response) = serde_json::from_str::<GeminiResponse>(&text) {
             Ok(response)
         } else {
@@ -201,7 +199,8 @@ impl GenerativeModel {
             ))
             .json(&request)
             .send()
-            .await.map_err(|err| GeminiError::message(&err.to_string()))?;
+            .await
+            .map_err(|err| GeminiError::message(&err.to_string()))?;
 
         let text = response
             .text()
