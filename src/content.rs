@@ -23,6 +23,12 @@ impl Content {
     }
 }
 
+impl<T> From<T> for Content where T: Into<Part> {
+    fn from(value: T) -> Self {
+        Content::user(value)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum Part {
@@ -55,6 +61,13 @@ impl From<&str> for Part {
         Part::Text(value.to_string())
     }
 }
+
+impl From<String> for Part {
+    fn from(value: String) -> Self {
+        Part::Text(value)
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
