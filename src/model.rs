@@ -99,19 +99,44 @@ impl GenerativeModel {
         &self,
         prompt: Vec<Content>,
     ) -> Result<GeminiResponse, GeminiError> {
+        // equivalent to passing an empty builder to generate_content_with
+        self.generate_content_with(prompt, GenerativeModelBuilder::new())
+            .await
+    }
+
+    pub async fn generate_content_streamed(
+        &self,
+        prompt: Vec<Content>,
+    ) -> impl Stream<Item = Result<GeminiResponse, GeminiError>> {
+        self.generate_content_streamed_with(prompt, GenerativeModelBuilder::new())
+            .await
+    }
+
+    // Only overrides the some values of builder, useful for things like temporary generating with a specific model
+    pub async fn generate_content_with(
+        &self,
+        prompt: Vec<Content>,
+        config: GenerativeModelBuilder,
+    ) -> Result<GeminiResponse, GeminiError> {
         let request = GeminiRequest {
             contents: prompt,
-            tools: self.tools.clone(),
-            safety_settings: self.safety_settings.clone(),
-            system_instruction: self.system_instruction.clone(),
-            generation_config: self.generation_config.clone(),
+            tools: config.tools.or_else(|| self.tools.clone()),
+            safety_settings: config
+                .safety_settings
+                .or_else(|| self.safety_settings.clone()),
+            system_instruction: config
+                .system_instruction
+                .or_else(|| self.system_instruction.clone()),
+            generation_config: config
+                .generation_config
+                .or_else(|| self.generation_config.clone()),
         };
-
         let client = reqwest::Client::new();
         let response = client
             .post(format!(
                 "{BASE_URL}/models/{}:generateContent?key={}",
-                self.model, self.api_key
+                config.model.as_ref().unwrap_or(&self.model),
+                self.api_key
             ))
             .json(&request)
             .send()
@@ -135,27 +160,38 @@ impl GenerativeModel {
         }
     }
 
-    pub async fn generate_content_streamed(
+    pub async fn generate_content_streamed_with(
         &self,
         prompt: Vec<Content>,
+        config: GenerativeModelBuilder,
     ) -> impl Stream<Item = Result<GeminiResponse, GeminiError>> {
         let request = GeminiRequest {
             contents: prompt,
-            tools: self.tools.clone(),
-            safety_settings: self.safety_settings.clone(),
-            system_instruction: self.system_instruction.clone(),
-            generation_config: self.generation_config.clone(),
+            tools: config.tools.or_else(|| self.tools.clone()),
+            safety_settings: config
+                .safety_settings
+                .or_else(|| self.safety_settings.clone()),
+            system_instruction: config
+                .system_instruction
+                .or_else(|| self.system_instruction.clone()),
+            generation_config: config
+                .generation_config
+                .or_else(|| self.generation_config.clone()),
         };
-
         let client = reqwest::Client::new();
         let response = client
             .post(format!(
                 "{BASE_URL}/models/{}:streamGenerateContent?key={}",
-                self.model, self.api_key
+                config.model.as_ref().unwrap_or(&self.model),
+                self.api_key
             ))
             .json(&request)
             .send()
             .await
+            .map_err(|err| GeminiError {
+                kind: GeminiErrorKind::Other,
+                message: err.to_string(),
+            })
             .unwrap();
 
         let stream = response.bytes_stream().filter_map(|chunk| async move {
