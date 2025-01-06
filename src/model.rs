@@ -22,6 +22,7 @@ pub struct GenerativeModel {
     pub tools: Option<Vec<Tool>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct GenerativeModelBuilder {
     pub api_key: Option<String>,
     pub model: Option<GeminiModel>,
