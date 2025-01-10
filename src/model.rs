@@ -4,7 +4,7 @@ use std::{borrow::Cow, fmt::Display};
 use futures_util::{Stream, StreamExt};
 
 use crate::{
-    api::{GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
+    api::{GeminiGenericError, GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
     chat::ChatSession,
     content::Content,
     error::{GeminiError, GeminiErrorKind},
@@ -138,7 +138,7 @@ impl GenerativeModel {
     pub async fn generate_content_streamed(
         &self,
         prompt: Vec<Content>,
-    ) -> impl Stream<Item = Result<GeminiResponse, GeminiError>> {
+    ) -> Result<impl Stream<Item = Result<GeminiResponse, GeminiError>>, GeminiError> {
         self.generate_content_streamed_with(prompt, GenerativeModelBuilder::new())
             .await
     }
@@ -170,32 +170,33 @@ impl GenerativeModel {
         &self,
         prompt: Vec<Content>,
         config: GenerativeModelBuilder,
-    ) -> impl Stream<Item = Result<GeminiResponse, GeminiError>> {
-        let response = self.send_request(prompt, config, true).await.unwrap();
+    ) -> Result<impl Stream<Item = Result<GeminiResponse, GeminiError>>, GeminiError> {
+        let response = self.send_request(prompt, config, true).await?;
 
         let stream = response.bytes_stream().filter_map(|chunk| async move {
-            let chunk = chunk.unwrap();
+            match chunk {
+                Ok(chunk) => {
+                    // we skip either '[' (which happens in the first chunk) or ',' in the subsequent chunks
+                    let str = &str::from_utf8(&chunk)
+                        .expect("Unexpected: this should not happen. Please report this bug to rusty-gemini repo.")[1..];
 
-            // we skip either '[' (which happens in the first chunk) or ',' in the subsequent chunks
-            let str = &str::from_utf8(&chunk).unwrap()[1..];
-
-            // in the last chunk, str should be empty
-            if str.is_empty() {
-                None
-            } else if let Ok(response) = serde_json::from_str::<GeminiResponse>(&str) {
-                Some(Ok(response))
-            } else {
-                Some(Err(serde_json::from_str::<GeminiGenericErrorResponse>(
-                    &str,
-                )
-                .map(|x| GeminiError::from(x.error))
-                .unwrap_or_else(|err| GeminiError {
-                    kind: GeminiErrorKind::Other,
-                    message: err.to_string(),
-                })))
+                    // in the last chunk, str should be empty
+                    if str.is_empty() {
+                        None
+                    } else if let Ok(response) = serde_json::from_str::<GeminiResponse>(&str) {
+                        Some(Ok(response))
+                    } else {
+                        Some(Err(serde_json::from_str::<GeminiGenericErrorResponse>(
+                            &str,
+                        )
+                        .map(|x| GeminiError::from(x.error))
+                        .unwrap_or_else(|err| GeminiError::message(&err.to_string()))))
+                    }
+                }
+                Err(err) => Some(Err(GeminiError::message(&err.to_string()))),
             }
         });
-        stream
+        Ok(stream)
     }
 
     /// Embeds the content using the model's embedding capabilities.
