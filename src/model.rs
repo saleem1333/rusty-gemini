@@ -4,7 +4,7 @@ use std::{borrow::Cow, fmt::Display};
 use futures_util::{Stream, StreamExt};
 
 use crate::{
-    api::{GeminiGenericError, GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
+    api::{GeminiGenericErrorResponse, GenerationConfig, SafetySetting, Tool},
     chat::ChatSession,
     content::Content,
     error::{GeminiError, GeminiErrorKind},

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
