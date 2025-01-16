@@ -1,5 +1,6 @@
 use crate::{content::Content, error::GeminiError, model::GenerativeModel, GeminiResponse};
 
+#[derive(Debug)]
 pub struct ChatSession {
     pub(crate) model: GenerativeModel,
     pub(crate) history: Vec<Content>,
