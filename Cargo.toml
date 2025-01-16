@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Mohammed Abd Elsamad"]
 description = "A powerful and user-friendly library designed for effortless integration with the Gemini API"
 repository = "https://github.com/saleem1333/rusty-gemini"
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["gemini", "ai", "bard", "api"]
 
 [dependencies]
