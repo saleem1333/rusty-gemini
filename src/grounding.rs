@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::content::Content;
 
@@ -79,4 +79,23 @@ pub struct Segment {
     pub start_index: i32,
     pub end_index: i32,
     pub text: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GoogleSearchRetrieval {
+    pub dynamic_retrieval_config: DynamicRetrievalConfig,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DynamicRetrievalConfig {
+    pub mode: Mode,
+    pub dynamic_threshold: Option<f32>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub enum Mode {
+    ModeUnspecified,
+    ModeDynamic,
 }

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -23,7 +25,10 @@ impl Content {
     }
 }
 
-impl<T> From<T> for Content where T: Into<Part> {
+impl<T> From<T> for Content
+where
+    T: Into<Part>,
+{
     fn from(value: T) -> Self {
         Content::user(value)
     }
@@ -41,6 +46,14 @@ pub enum Part {
         #[serde(rename = "mimeType")]
         mime_type: String,
     },
+    FunctionCall {
+        name: String,
+        args: Option<serde_json::Value>,
+    },
+    FunctionResponse {
+        name: String,
+        response: serde_json::Value,
+    },
 }
 
 fn ser_data<S>(bytes: &Vec<u8>, ser: S) -> Result<S::Ok, S::Error>
@@ -54,7 +67,9 @@ fn des_data<'de, D>(des: D) -> Result<Vec<u8>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    Ok(general_purpose::STANDARD.decode(String::deserialize(des)?).unwrap())
+    Ok(general_purpose::STANDARD
+        .decode(String::deserialize(des)?)
+        .unwrap())
 }
 impl From<&str> for Part {
     fn from(value: &str) -> Self {
@@ -67,7 +82,6 @@ impl From<String> for Part {
         Part::Text(value)
     }
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

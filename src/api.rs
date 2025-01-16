@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{content::{Content, Part}, grounding::GroundingAtrribution, schema::Schema};
+use crate::{
+    content::{Content, Part},
+    grounding::{GoogleSearchRetrieval, GroundingAtrribution},
+    schema::Schema,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -119,10 +123,6 @@ pub enum FinishReason {
     MalformedFunctionCall,
 }
 
-
-/// Represents a chunk
-
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SafetySetting {
     /// The category for this setting.
@@ -193,26 +193,57 @@ pub struct CountTokenResponse {
 }
 
 impl Candidate {
-    pub fn text(&self) -> String {
-        let text = self
-            .content
-            .parts
-            .iter()
-            .filter_map(|part| match part {
-                Part::Text(text) => Some(text.as_str()),
-                _ => None,
-            })
-            .collect::<Vec<_>>()
-            .join("");
-        text
+    pub fn text(&self) -> Option<String> {
+        let mut text = String::new();
+        for part in &self.content.parts {
+            if let Part::Text(t) = part {
+                text.push_str(t);
+            }
+        }
+
+        if text.is_empty() {
+            None
+        } else {
+            Some(text)
+        }
     }
+}
+
+#[derive(Debug, Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Tool {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub function_declarations: Option<Vec<FunctionDeclaration>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub google_search_retrieval: Option<GoogleSearchRetrieval>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code_execution: Option<CodeExecution>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ToolConfig {
+    function_calling_config: Option<FunctionCallingConfig>,
 }
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Tool {
-    pub function_declarations: Vec<FunctionDeclaration>,
+pub struct FunctionCallingConfig {
+    pub mode: Option<Mode>,
+    pub allowed_function_names: Vec<String>,
 }
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Mode {
+    #[serde(rename = "MODE_UNSPECIFIED")]
+    Unspecified,
+    Auto,
+    Any,
+    None,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct CodeExecution;
 
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -255,6 +286,7 @@ pub enum ResponseMimeType {
 pub struct FunctionDeclaration {
     pub name: String,
     pub description: String,
+    pub parameters: Option<Schema>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -276,7 +308,6 @@ pub enum TaskType {
     #[serde(rename = "FACT_VERIFICATION")]
     FactVerification,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GeminiGenericErrorResponse {

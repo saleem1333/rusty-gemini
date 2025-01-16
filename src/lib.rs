@@ -27,7 +27,6 @@ pub struct GeminiRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub generation_config: Option<GenerationConfig>,
 }
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeminiResponse {
@@ -37,7 +36,7 @@ pub struct GeminiResponse {
 }
 
 impl GeminiResponse {
-    pub fn text(&self) -> String {
+    pub fn text(&self) -> Option<String> {
         self.candidates[0].text()
     }
 }
